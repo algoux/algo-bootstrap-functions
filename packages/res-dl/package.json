@@ -1,0 +1,20 @@
+{
+  "name": "algo-bootstrap-f-res-dl",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cos-nodejs-sdk-v5": "^2.16.0-beta.3",
+    "fs-extra": "^9.1.0",
+    "got": "^11.8.6",
+    "md5-file": "^5.0.0",
+    "moment": "^2.24.0"
+  }
+}
