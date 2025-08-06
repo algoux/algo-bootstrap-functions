@@ -12,6 +12,10 @@ exports.main_handler = async (event, context) => {
       const runVsixTask = require('./tasks/vsix');
       return await runVsixTask(args);
     }
+    case 'python': {
+      const runPythonTask = require('./tasks/python');
+      return await runPythonTask(args);
+    }
     default:
       throw new Error(`Unknown task type: ${type}`);
   }

@@ -50,3 +50,9 @@ inputs:
           cronExpression: '0 0 * * * * *'
           enable: true
           argument: '{ "type": "vsix" }'
+    - timer:
+        parameters:
+          name: timer-python
+          cronExpression: '0 30 * * * * *'
+          enable: true
+          argument: '{ "type": "python" }'
