@@ -46,10 +46,10 @@ inputs:
   events: # 触发器
     - timer:
         parameters:
-          name: timer-vsix
-          cronExpression: '0 0 * * * * *'
+          name: timer-c_cpp
+          cronExpression: '0 0 4 * * * *'
           enable: true
-          argument: '{ "type": "vsix" }'
+          argument: '{ "type": "c_cpp" }'
     - timer:
         parameters:
           name: timer-python
@@ -58,7 +58,13 @@ inputs:
           argument: '{ "type": "python" }'
     - timer:
         parameters:
-          name: timer-c_cpp
-          cronExpression: '0 0 4 * * * *'
+          name: timer-vscode
+          cronExpression: '0 0 2,10,18 * * * *'
           enable: true
-          argument: '{ "type": "c_cpp" }'
+          argument: '{ "type": "vscode" }'
+    - timer:
+        parameters:
+          name: timer-vsix
+          cronExpression: '0 0 * * * * *'
+          enable: true
+          argument: '{ "type": "vsix" }'

@@ -20,9 +20,6 @@ async function getLatestRelease(repo) {
   try {
     const { body } = await got(`https://api.github.com/repos/${repo}/releases/latest`, {
       responseType: 'json',
-      headers: {
-        'User-Agent': 'algo-bootstrap-functions',
-      },
     });
 
     const version = body.tag_name;
