@@ -16,6 +16,10 @@ exports.main_handler = async (event, context) => {
       const runPythonTask = require('./tasks/python');
       return await runPythonTask(args);
     }
+    case 'c_cpp': {
+      const runCppTask = require('./tasks/c_cpp');
+      return await runCppTask(args);
+    }
     default:
       throw new Error(`Unknown task type: ${type}`);
   }

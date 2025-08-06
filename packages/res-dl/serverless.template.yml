@@ -53,6 +53,12 @@ inputs:
     - timer:
         parameters:
           name: timer-python
-          cronExpression: '0 30 * * * * *'
+          cronExpression: '0 0 4 * * * *'
           enable: true
           argument: '{ "type": "python" }'
+    - timer:
+        parameters:
+          name: timer-c_cpp
+          cronExpression: '0 0 4 * * * *'
+          enable: true
+          argument: '{ "type": "c_cpp" }'
