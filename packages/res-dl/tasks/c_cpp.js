@@ -7,7 +7,8 @@ const { downloadFile } = require('../utils/download');
 const { uploadFileToCOS } = require('../utils/cos');
 const ResourceIndexManager = require('../utils/res-index-mgr');
 
-const C_CPP_BASE_PATH = 'algo-bootstrap/res/c_cpp';
+const RES_BASE_PATH = 'algo-bootstrap/res';
+const C_CPP_BASE_PATH = `${RES_BASE_PATH}/c_cpp`;
 
 /**
  * 从 GitHub API 获取最新版本信息
@@ -122,7 +123,11 @@ async function runCppTask(args) {
         if (
           rim.update(
             'win32-x64',
-            ResourceIndexManager.genIndexItemForFile(filePath, cosFilePath, version),
+            ResourceIndexManager.genIndexItemForFile(
+              filePath,
+              path.relative(RES_BASE_PATH, cosFilePath),
+              version,
+            ),
           )
         ) {
           await uploadFileToCOS(filePath, cosFilePath);
@@ -155,7 +160,11 @@ async function runCppTask(args) {
         if (
           rim.update(
             'win32-arm64',
-            ResourceIndexManager.genIndexItemForFile(filePath, cosFilePath, version),
+            ResourceIndexManager.genIndexItemForFile(
+              filePath,
+              path.relative(RES_BASE_PATH, cosFilePath),
+              version,
+            ),
           )
         ) {
           await uploadFileToCOS(filePath, cosFilePath);

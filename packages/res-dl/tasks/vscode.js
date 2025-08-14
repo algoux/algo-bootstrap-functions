@@ -7,7 +7,8 @@ const { downloadFile } = require('../utils/download');
 const { uploadFileToCOS } = require('../utils/cos');
 const ResourceIndexManager = require('../utils/res-index-mgr');
 
-const VSCODE_BASE_PATH = 'algo-bootstrap/res/vscode';
+const RES_BASE_PATH = 'algo-bootstrap/res';
+const VSCODE_BASE_PATH = `${RES_BASE_PATH}/vscode`;
 const TARGET_PLATFORMS = ['win32-arm64', 'win32-x64', 'darwin-arm64', 'darwin-x64'];
 
 /**
@@ -124,7 +125,11 @@ async function runVSCodeTask(args) {
         if (
           rim.update(
             platform,
-            ResourceIndexManager.genIndexItemForFile(filePath, cosFilePath, version),
+            ResourceIndexManager.genIndexItemForFile(
+              filePath,
+              path.relative(RES_BASE_PATH, cosFilePath),
+              version,
+            ),
           )
         ) {
           await uploadFileToCOS(filePath, cosFilePath);

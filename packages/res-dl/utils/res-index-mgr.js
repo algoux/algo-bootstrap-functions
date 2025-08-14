@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs-extra');
 const md5File = require('md5-file');
 const { logger } = require('./logger');
 const { moment } = require('./datetime');
@@ -7,17 +8,19 @@ const { uploadFileToCOS, getFileContentFromCOS } = require('./cos');
 /**
  * @typedef {Object} ResourceIndexItem
  * @property {string} version - Version of the resource
- * @property {string} path - Relative path in COS
+ * @property {string} path - Relative path (relative to the base path)
  * @property {string} md5 - MD5 hash of the resource
+ * @property {number} size - Size of the resource in bytes
  * @property {string} updatedAt - Last updated timestamp in ISO 8601 format
  */
 
 class ResourceIndexManager {
-  static genIndexItemForFile(filePath, remotePath, version) {
+  static genIndexItemForFile(filePath, remoteRelativePath, version) {
     return {
       version,
-      path: remotePath,
+      path: remoteRelativePath,
       md5: md5File.sync(filePath),
+      size: fs.statSync(filePath).size,
       updatedAt: moment().toISOString(true),
     };
   }

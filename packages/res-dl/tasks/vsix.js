@@ -7,7 +7,8 @@ const { downloadFile } = require('../utils/download');
 const { uploadFileToCOS } = require('../utils/cos');
 const ResourceIndexManager = require('../utils/res-index-mgr');
 
-const VSIX_BASE_PATH = 'algo-bootstrap/res/vsix';
+const RES_BASE_PATH = 'algo-bootstrap/res';
+const VSIX_BASE_PATH = `${RES_BASE_PATH}/vsix`;
 const COMM_PLATFORMS = ['win32-arm64', 'win32-x64', 'darwin-arm64', 'darwin-x64'];
 const vsixList = [
   { id: 'divyanshuagrawal.competitive-programming-helper' },
@@ -24,7 +25,6 @@ const vsixList = [
   { id: 'usernamehw.errorlens' },
   { id: 'vadimcn.vscode-lldb' },
 ];
-
 
 /**
  * 从 VSCode 市场下载指定扩展的 VSIX 文件
@@ -72,6 +72,7 @@ async function downloadVsix(extensionId, platform, version = undefined, saveDir)
 async function getLatestVersionInfo(extensionId, requiredPlatforms) {
   logger.info(`Fetching latest version for ${extensionId}`);
   // @see https://github.com/microsoft/vscode/blob/b43174e1b275850f5b80d170e47c1c04eb780790/src/vs/platform/extensionManagement/node/extensionGalleryService.ts#L94-L103
+  // @see https://github.com/microsoft/vscode/blob/main/src/vs/platform/extensionManagement/common/extensionGalleryManifestService.ts
   const requestBody = {
     assetTypes: null,
     filters: [
@@ -90,7 +91,7 @@ async function getLatestVersionInfo(extensionId, requiredPlatforms) {
         pagingToken: null,
       },
     ],
-    flags: 2151,
+    flags: 2167,
   };
 
   try {
@@ -106,22 +107,31 @@ async function getLatestVersionInfo(extensionId, requiredPlatforms) {
       },
     );
 
-    if (!body.results?.[0]?.extensions?.[0]?.versions?.[0]?.version) {
+    if (!body.results?.[0]?.extensions?.[0]?.versions) {
       throw new Error('No version information found in marketplace response');
     }
 
-    const version = body.results[0].extensions[0].versions[0].version;
+    const latestReleaseVersion = body.results[0].extensions[0].versions.find(
+      (v) =>
+        !v.properties.some(
+          (p) => p.key === 'Microsoft.VisualStudio.Code.PreRelease' && p.value === 'true',
+        ),
+    );
+    if (!latestReleaseVersion) {
+      throw new Error('No release version found in marketplace response');
+    }
+
     const platforms = body.results[0].extensions[0].versions
       .filter(
         (v) =>
-          v.version === version &&
+          v.version === latestReleaseVersion.version &&
           (!v.targetPlatform ||
             !requiredPlatforms?.length ||
             requiredPlatforms.includes(v.targetPlatform)),
       )
       .map((v) => v.targetPlatform || 'universal');
 
-    return { version, platforms };
+    return { version: latestReleaseVersion.version, platforms };
   } catch (err) {
     throw new Error(`Marketplace API request failed: ${err.message}`);
   }
@@ -141,7 +151,11 @@ async function runVsixTask(args) {
       const rim = new ResourceIndexManager(basePath);
       await rim.load();
       const { version, platforms } = await getLatestVersionInfo(id, COMM_PLATFORMS);
-      logger.info(`Fetched ${id}: version ${version}, platforms: ${platforms.join(', ')}`);
+      logger.info(`Fetched ${id}: version ${version}, platforms: [${platforms.join(', ')}]`);
+      if (platforms.length === 0) {
+        logger.warn(`No platforms found for ${id}, skipping.`);
+        continue;
+      }
       for (const platform of platforms) {
         const resItem = rim.get(platform);
         if (resItem && resItem.version === version) {
@@ -154,7 +168,11 @@ async function runVsixTask(args) {
         if (
           rim.update(
             platform,
-            ResourceIndexManager.genIndexItemForFile(filePath, cosFilePath, version),
+            ResourceIndexManager.genIndexItemForFile(
+              filePath,
+              path.relative(RES_BASE_PATH, cosFilePath),
+              version,
+            ),
           )
         ) {
           await uploadFileToCOS(filePath, cosFilePath);

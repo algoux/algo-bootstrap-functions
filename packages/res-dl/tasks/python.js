@@ -7,7 +7,8 @@ const { downloadFile } = require('../utils/download');
 const { uploadFileToCOS } = require('../utils/cos');
 const ResourceIndexManager = require('../utils/res-index-mgr');
 
-const PYTHON_BASE_PATH = 'algo-bootstrap/res/python';
+const RES_BASE_PATH = 'algo-bootstrap/res';
+const PYTHON_BASE_PATH = `${RES_BASE_PATH}/python`;
 const TARGET_PLATFORMS = ['win32-arm64', 'win32-x64'];
 
 /**
@@ -109,7 +110,11 @@ async function runPythonTask(args) {
         if (
           rim.update(
             platform,
-            ResourceIndexManager.genIndexItemForFile(filePath, cosFilePath, version),
+            ResourceIndexManager.genIndexItemForFile(
+              filePath,
+              path.relative(RES_BASE_PATH, cosFilePath),
+              version,
+            ),
           )
         ) {
           await uploadFileToCOS(filePath, cosFilePath);
