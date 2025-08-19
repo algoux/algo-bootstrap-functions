@@ -24,9 +24,10 @@ async function getLatestRelease(repo) {
     });
 
     const version = body.tag_name;
-    logger.info(`Found latest release of ${repo}: ${version}`);
+    const name = body.name;
+    logger.info(`Found latest release of ${repo}: ${version} (${name})`);
 
-    return { version, releaseData: body };
+    return { version, name, releaseData: body };
   } catch (error) {
     throw new Error(`Failed to get latest release from ${repo}: ${error.message}`);
   }
@@ -59,8 +60,13 @@ async function getMinGWForWin32X64DownloadInfo() {
  * @returns {Promise<{ version: string, downloadUrl: string }>}
  */
 async function getLLVMMinGWForWin32Arm64DownloadInfo() {
-  const { version, releaseData } = await getLatestRelease('mstorsjo/llvm-mingw');
+  const { name, releaseData } = await getLatestRelease('mstorsjo/llvm-mingw');
+  const version = name.match(/LLVM (\d+\.\d+\.\d+)/)[1];
   const asset = releaseData.assets.find((asset) => asset.name.includes('ucrt-aarch64'));
+
+  if (!version) {
+    throw new Error(`Failed to parse version from release name: ${name}`);
+  }
 
   if (!asset) {
     throw new Error(`No ucrt-aarch64 asset found in release ${version}`);
