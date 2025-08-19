@@ -23,11 +23,11 @@ async function getLatestRelease(repo) {
       responseType: 'json',
     });
 
-    const version = body.tag_name;
+    const tagName = body.tag_name;
     const name = body.name;
-    logger.info(`Found latest release of ${repo}: ${version} (${name})`);
+    logger.info(`Found latest release of ${repo}: ${tagName} (${name})`);
 
-    return { version, name, releaseData: body };
+    return { tagName, name, releaseData: body };
   } catch (error) {
     throw new Error(`Failed to get latest release from ${repo}: ${error.message}`);
   }
@@ -38,7 +38,11 @@ async function getLatestRelease(repo) {
  * @returns {Promise<{ version: string, downloadUrl: string }>}
  */
 async function getMinGWForWin32X64DownloadInfo() {
-  const { version, releaseData } = await getLatestRelease('niXman/mingw-builds-binaries');
+  const { name, releaseData } = await getLatestRelease('niXman/mingw-builds-binaries');
+  const version = name.match(/(\d+\.\d+\.\d+)/)[1];
+  if (!version) {
+    throw new Error(`Failed to parse version from release name: ${name}`);
+  }
 
   const asset = releaseData.assets.find(
     (asset) => asset.name.includes('x86_64') && asset.name.includes('seh-ucrt'),
