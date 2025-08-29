@@ -2,10 +2,12 @@ const os = require('os');
 const fs = require('fs-extra');
 const path = require('path');
 const got = require('got');
+const checkDiskSpace = require('check-disk-space').default;
 const { logger } = require('../utils/logger');
 const { downloadFile } = require('../utils/download');
 const { uploadFileToCOS } = require('../utils/cos');
 const ResourceIndexManager = require('../utils/res-index-mgr');
+const { convert7zToZip } = require('../utils/7z-to-zip');
 
 const RES_BASE_PATH = 'algo-bootstrap/res';
 const C_CPP_BASE_PATH = `${RES_BASE_PATH}/c_cpp`;
@@ -111,6 +113,11 @@ async function runCppTask(args) {
   const failedPlatforms = [];
   let updates = 0;
 
+  const diskSpace = await checkDiskSpace(tmpSaveDir);
+  logger.info(
+    `Disk space: ${diskSpace.free}/${diskSpace.size} bytes (${diskSpace.diskPath})`,
+  );
+
   try {
     const rim = new ResourceIndexManager(C_CPP_BASE_PATH);
     await rim.load();
@@ -119,13 +126,28 @@ async function runCppTask(args) {
     try {
       logger.info('Processing C/C++ compiler for platform: win32-x64');
 
-      const { version, downloadUrl, fileName } = await getMinGWForWin32X64DownloadInfo();
+      const {
+        version,
+        downloadUrl,
+        fileName: originalFileName,
+      } = await getMinGWForWin32X64DownloadInfo();
 
       const resItem = rim.get('win32-x64');
       if (resItem && resItem.version === version) {
         logger.info(`Skipping win32-x64, already up-to-date (version ${version}).`);
       } else {
-        const { filePath } = await downloadCppCompiler(downloadUrl, fileName, tmpSaveDir);
+        let fileName = originalFileName;
+        let { filePath } = await downloadCppCompiler(downloadUrl, originalFileName, tmpSaveDir);
+        if (path.extname(originalFileName) === '.7z') {
+          const zipFilePath = path.join(
+            tmpSaveDir,
+            path.basename(originalFileName, '.7z') + '.zip',
+          );
+          await convert7zToZip(filePath, zipFilePath);
+          await fs.remove(filePath);
+          fileName = path.basename(zipFilePath);
+          filePath = zipFilePath;
+        }
 
         const cosDir = path.join(C_CPP_BASE_PATH, 'win32-x64');
         const cosFilePath = path.join(cosDir, fileName);
@@ -156,13 +178,28 @@ async function runCppTask(args) {
     try {
       logger.info('Processing C/C++ compiler for platform: win32-arm64');
 
-      const { version, downloadUrl, fileName } = await getLLVMMinGWForWin32Arm64DownloadInfo();
+      const {
+        version,
+        downloadUrl,
+        fileName: originalFileName,
+      } = await getLLVMMinGWForWin32Arm64DownloadInfo();
 
       const resItem = rim.get('win32-arm64');
       if (resItem && resItem.version === version) {
         logger.info(`Skipping win32-arm64, already up-to-date (version ${version}).`);
       } else {
-        const { filePath } = await downloadCppCompiler(downloadUrl, fileName, tmpSaveDir);
+        let fileName = originalFileName;
+        let { filePath } = await downloadCppCompiler(downloadUrl, originalFileName, tmpSaveDir);
+        if (path.extname(originalFileName) === '.7z') {
+          const zipFilePath = path.join(
+            tmpSaveDir,
+            path.basename(originalFileName, '.7z') + '.zip',
+          );
+          await convert7zToZip(filePath, zipFilePath);
+          await fs.remove(filePath);
+          fileName = path.basename(zipFilePath);
+          filePath = zipFilePath;
+        }
 
         const cosDir = path.join(C_CPP_BASE_PATH, 'win32-arm64');
         const cosFilePath = path.join(cosDir, fileName);
